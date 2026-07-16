@@ -25,11 +25,10 @@ import { useAuth } from "../components/context/AuthContext";
 
 const Employees = () => {
   const [open, setOpen] = useState(false);
-  const [employees, setEmployees] = useState([]); // ✅ Fixed
+  const [employees, setEmployees] = useState([]); 
 
   const { token } = useAuth();
 
-  // ✅ Moved outside useEffect so we can reuse it later
   const fetchEmployees = async () => {
     try {
       const data = await getEmployees(token);
