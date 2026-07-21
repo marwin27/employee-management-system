@@ -1,8 +1,11 @@
-import { useState } from 'react'
-import Login from './pages/Login'
+import { useState } from "react";
+import AppRoutes from "./routes/AppRoutes";
 function App() {
- 
-  return <Login></Login>;
+  return (
+    <>
+      <AppRoutes/>
+    </>
+  );
 }
 
-export default App
+export default App;
