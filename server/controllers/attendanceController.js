@@ -211,7 +211,6 @@ const getAttendanceReports = async (req, res) => {
 
     const query = { userId };
 
-    // Optional status filter
     if (status) {
       query.status = status;
     }
