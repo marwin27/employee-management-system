@@ -10,12 +10,16 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert,
 } from "@mui/material";
-import { createEmployee } from "../../api/employeeApi";
-import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
 
-const EmployeeDialog = ({ open, onClose }) => {
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { createEmployee, updateEmployee } from "../../api/employeeApi";
+
+const EmployeeDialog = ({ open, onClose, fetchEmployees, editEmployee }) => {
+  const { token } = useAuth();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -24,20 +28,23 @@ const EmployeeDialog = ({ open, onClose }) => {
     department: "",
     position: "",
     password: "",
-    role: "",
+    role: "Employee",
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-  const { token } = useAuth();
-  const handleSave = async () => {
-    try {
-      await createEmployee(formData, token);
-
+  useEffect(() => {
+    if (editEmployee) {
+      setFormData({
+        firstName: editEmployee.firstName,
+        lastName: editEmployee.lastName,
+        email: editEmployee.email,
+        employeeId: editEmployee.employeeId,
+        department: editEmployee.department,
+        position: editEmployee.position,
+        password: "",
+        role: editEmployee.role,
+      });
+    } else {
       setFormData({
         firstName: "",
         lastName: "",
@@ -46,114 +53,158 @@ const EmployeeDialog = ({ open, onClose }) => {
         department: "",
         position: "",
         password: "",
-        role: "",
+        role: "Employee",
       });
+    }
+    setErrorMessage("");
+  }, [editEmployee]);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      if (editEmployee) {
+        await updateEmployee(editEmployee._id, formData, token);
+      } else {
+        await createEmployee(formData, token);
+      }
+
+      await fetchEmployees();
+
       onClose();
     } catch (error) {
-      console.log(error);
+      setErrorMessage(error.response.data.message || "Something went wrong");
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Add Employee</DialogTitle>
-
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="First Name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Employee ID"
-              name="employeeId"
-              value={formData.employeeId}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Department"
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Position"
-              name="position"
-              value={formData.position}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Role</InputLabel>
-
-              <Select
-                name="role"
-                value={formData.role}
-                label="Role"
+      <DialogTitle>
+        {editEmployee ? "Edit Employee" : "Add Employee"}
+      </DialogTitle>
+      <form onSubmit={handleSave}>
+        <DialogContent>
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="First Name"
+                name="firstName"
+                value={formData.firstName}
                 onChange={handleChange}
-              >
-                <MenuItem value="Employee">Employee</MenuItem>
-                <MenuItem value="Admin">Admin</MenuItem>
-              </Select>
-            </FormControl>
+                fullWidth
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Last Name"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Employee ID"
+                name="employeeId"
+                value={formData.employeeId}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Position"
+                name="position"
+                value={formData.position}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Password"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                fullWidth
+                required={!editEmployee}
+                helperText={
+                  editEmployee
+                    ? "Leave blank to keep the current password."
+                    : ""
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Role</InputLabel>
+
+                <Select
+                  name="role"
+                  value={formData.role}
+                  label="Role"
+                  onChange={handleChange}
+                >
+                  <MenuItem value="Employee">Employee</MenuItem>
+                  <MenuItem value="Admin">Admin</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-        </Grid>
-      </DialogContent>
+        </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
 
-        <Button variant="contained" onClick={handleSave}>
-          Save
-        </Button>
-      </DialogActions>
+          <Button type="submit" variant="contained">
+            {editEmployee ? "Update" : "Save"}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };
