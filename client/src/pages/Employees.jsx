@@ -11,6 +11,7 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  TablePagination,
 } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
@@ -20,12 +21,17 @@ import AddIcon from "@mui/icons-material/Add";
 import { useState, useEffect } from "react";
 
 import EmployeeDialog from "../components/employee/EmployeeDialog";
-import { getEmployees } from "../api/employeeApi";
+import { getEmployees, deactivateEmployee } from "../api/employeeApi";
 import { useAuth } from "../components/context/AuthContext";
 
 const Employees = () => {
   const [open, setOpen] = useState(false);
-  const [employees, setEmployees] = useState([]); 
+  const [employees, setEmployees] = useState([]);
+  const [editEmployee, setEditEmployee] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const { token } = useAuth();
 
@@ -41,6 +47,35 @@ const Employees = () => {
   useEffect(() => {
     fetchEmployees();
   }, [token]);
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to deactivate this employee?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deactivateEmployee(id, token);
+      await fetchEmployees();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const filteredEmployees = employees.filter((employee) => {
+    const searchTerm = search.toLowerCase();
+
+    const fullName =
+      `${employee.firstName || ""} ${employee.lastName || ""}`.toLowerCase();
+
+    return (
+      fullName.includes(searchTerm) ||
+      (employee.employeeId || "").toLowerCase().includes(searchTerm) ||
+      (employee.department || "").toLowerCase().includes(searchTerm) ||
+      (employee.role || "").toLowerCase().includes(searchTerm)
+    );
+  });
 
   return (
     <Box sx={{ p: 3 }}>
@@ -64,12 +99,20 @@ const Employees = () => {
           placeholder="Search employee..."
           size="small"
           sx={{ width: 350 }}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
         />
 
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setEditEmployee(null);
+            setOpen(true);
+          }}
         >
           Add Employee
         </Button>
@@ -88,37 +131,70 @@ const Employees = () => {
           </TableHead>
 
           <TableBody>
-            {employees.map((employee) => (
-              <TableRow key={employee._id}>
-                <TableCell>{employee.employeeId}</TableCell>
+            {filteredEmployees
+              .slice(
+                page * rowsPerPage,
+                page * rowsPerPage + rowsPerPage
+              )
+              .map((employee) => (
+                <TableRow key={employee._id}>
+                  <TableCell>{employee.employeeId}</TableCell>
 
-                <TableCell>
-                  {employee.firstName} {employee.lastName}
-                </TableCell>
+                  <TableCell>
+                    {employee.firstName} {employee.lastName}
+                  </TableCell>
 
-                <TableCell>{employee.department}</TableCell>
+                  <TableCell>{employee.department}</TableCell>
 
-                <TableCell>{employee.role}</TableCell>
+                  <TableCell>{employee.role}</TableCell>
 
-                <TableCell align="center">
-                  <IconButton color="primary">
-                    <EditIcon />
-                  </IconButton>
+                  <TableCell align="center">
+                    <IconButton
+                      color="primary"
+                      onClick={() => {
+                        setEditEmployee(employee);
+                        setOpen(true);
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
 
-                  <IconButton color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+                    <IconButton
+                      color="error"
+                      onClick={() => handleDelete(employee._id)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
+
+        <TablePagination
+          component="div"
+          count={filteredEmployees.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          onPageChange={(event, newPage) => {
+            setPage(newPage);
+          }}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+        />
       </TableContainer>
 
       <EmployeeDialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setEditEmployee(null);
+        }}
         fetchEmployees={fetchEmployees}
+        editEmployee={editEmployee}
       />
     </Box>
   );
