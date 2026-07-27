@@ -215,17 +215,14 @@ const getAttendanceReports = async (req, res) => {
       query.status = status;
     }
 
-    // Optional date filter
     if (year) {
       let startDate;
       let endDate;
 
       if (month) {
-        // Monthly report
         startDate = new Date(Number(year), Number(month) - 1, 1);
         endDate = new Date(Number(year), Number(month), 1);
       } else {
-        // Yearly report
         startDate = new Date(Number(year), 0, 1);
         endDate = new Date(Number(year) + 1, 0, 1);
       }
@@ -246,6 +243,96 @@ const getAttendanceReports = async (req, res) => {
   }
 };
 
+const getTodayAttendance = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const today = new Date();
+
+    const attendance = await Attendance.findOne({
+      userId,
+      date: {
+        $gte: new Date(today.setHours(0, 0, 0, 0)),
+        $lte: new Date(today.setHours(23, 59, 59, 999)),
+      },
+    });
+
+    res.status(200).json({
+      attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+const getMonthlyAttendance = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const records = await Attendance.aggregate([
+      {
+        $match: {
+          userId,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$date" },
+          },
+          present: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Present"] }, 1, 0],
+            },
+          },
+          absent: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Absent"] }, 1, 0],
+            },
+          },
+          late: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Late"] }, 1, 0],
+            },
+          },
+          halfDay: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Half Day"] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+const getRecentAttendance = async(req, res) => {
+  try{
+    const userId = req.user._id;
+
+    const records = await Attendance.find({ userId }).sort({ date: -1 }).limit(5);
+
+    res.status(200).json(records);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
 module.exports = {
   timeIn,
   timeOut,
@@ -254,4 +341,7 @@ module.exports = {
   getAttendanceByEmployee,
   getAttendanceSummary,
   getAttendanceReports,
+  getTodayAttendance,
+  getMonthlyAttendance,
+  getRecentAttendance,
 };
