@@ -43,11 +43,7 @@ const calculateOvertimeMinutes = (timeOut) => {
 };
 
 const calculateStatus = (lateMinutes) => {
-  if (lateMinutes > ATTENDANCE_CONFIG.HALF_DAY_MINUTES) {
-    return "Absent";
-  }
-
-  if (lateMinutes === ATTENDANCE_CONFIG.HALF_DAY_MINUTES) {
+  if (lateMinutes >= ATTENDANCE_CONFIG.HALF_DAY_MINUTES) {
     return "Half Day";
   }
 
