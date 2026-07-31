@@ -280,7 +280,12 @@ const getMonthlyAttendance = async (req, res) => {
       {
         $group: {
           _id: {
-            month: { $month: "$date" },
+            month: {
+              $month: {
+                date: "$date",
+                timezone: "Asia/Manila",
+              },
+            },
           },
           present: {
             $sum: {
@@ -319,11 +324,13 @@ const getMonthlyAttendance = async (req, res) => {
   }
 };
 
-const getRecentAttendance = async(req, res) => {
-  try{
+const getRecentAttendance = async (req, res) => {
+  try {
     const userId = req.user._id;
 
-    const records = await Attendance.find({ userId }).sort({ date: -1 }).limit(5);
+    const records = await Attendance.find({ userId })
+      .sort({ date: -1 })
+      .limit(5);
 
     res.status(200).json(records);
   } catch (error) {
@@ -331,7 +338,7 @@ const getRecentAttendance = async(req, res) => {
       message: error.message,
     });
   }
-}
+};
 
 module.exports = {
   timeIn,

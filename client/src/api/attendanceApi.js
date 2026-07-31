@@ -78,3 +78,16 @@ export const getRecentAttendance = async (token) => {
 
   return response.data;
 };
+
+export const getAttendanceReports = async (token, month, year) => {
+  const response = await axios.get(
+    `${API_URL}/reports?month=${month}&year=${year}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  return response.data;
+};
