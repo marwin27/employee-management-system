@@ -82,7 +82,6 @@ const login = async (req, res) => {
       },
       process.env.JWT_SECRET,
     );
-    
 
     res.status(200).json({
       message: "Login successful",
@@ -94,6 +93,8 @@ const login = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        department: user.department,
+        position: user.position,
       },
     });
   } catch (error) {
