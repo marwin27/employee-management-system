@@ -16,6 +16,7 @@ import {
   TableRow,
   Paper,
   Chip,
+  Button,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -28,11 +29,13 @@ import {
 import { useState, useEffect } from "react";
 import { getAttendanceReports } from "../api/attendanceApi";
 import { useAuth } from "../components/context/AuthContext";
+import { exportAttendancePdf } from "../utils/exportAttendancePdf";
+import DownloadIcon from "@mui/icons-material/Download";
 
 import dayjs from "dayjs";
 
 const Reports = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [reports, setReports] = useState([]);
 
   const currentYear = new Date().getFullYear();
@@ -133,13 +136,47 @@ const Reports = () => {
   );
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" fontWeight="bold">
-        Attendance Reports
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h4" fontWeight="bold">
+            Attendance Reports
+          </Typography>
 
-      <Typography color="text.secondary" sx={{ mt: 1 }}>
-        View your attendance reports by month and year.
-      </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            View your attendance reports by month and year.
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          startIcon={<DownloadIcon />}
+          onClick={() =>
+            exportAttendancePdf({
+              reports,
+              month,
+              year,
+              user,
+              summary: {
+                worked: totalWorked,
+                present: totalPresent,
+                late: totalLate,
+                halfDay: totalHalfDay,
+                absent: totalAbsent,
+                overtime: totalOvertime,
+              },
+            })
+          }
+        >
+          Export PDF
+        </Button>
+      </Box>
       <Card sx={{ mt: 3, mb: 3 }}>
         <CardContent>
           <Grid container spacing={2}>
