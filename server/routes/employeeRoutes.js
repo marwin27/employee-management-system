@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
+const { adminOnly } = require("../middleware/adminMiddleware");
 const {
   getEmployees,
   getEmployeeById,
@@ -10,11 +11,10 @@ const {
   deactivateEmployee,
 } = require("../controllers/employeeController");
 
-router.get("/", protect, getEmployees);
-router.get("/:id", protect, getEmployeeById);
-router.post("/", protect, createEmployee);
-router.put("/:id", protect, updateEmployee);
-router.put("/:id/deactivate", protect, deactivateEmployee);
-
+router.get("/", protect, adminOnly, getEmployees);
+router.get("/:id", protect, adminOnly, getEmployeeById);
+router.post("/", protect, adminOnly, createEmployee);
+router.put("/:id", protect, adminOnly, updateEmployee);
+router.put("/:id/deactivate", protect, adminOnly, deactivateEmployee);
 
 module.exports = router;

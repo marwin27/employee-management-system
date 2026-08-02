@@ -7,6 +7,7 @@ import Attendance from "../pages/Attendance";
 import Reports from "../pages/Reports";
 import MainLayout from "../components/layouts/MainLayout";
 import ProtectedRoutes from "./ProtectedRoutes";
+import AdminRoutes from "./AdminRoutes";
 
 const AppRoutes = () => {
   return (
@@ -17,7 +18,14 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoutes />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/employees" element={<Employees />} />
+            <Route
+              path="/employees"
+              element={
+                <AdminRoutes>
+                  <Employees />
+                </AdminRoutes>
+              }
+            />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/reports" element={<Reports />} />
           </Route>

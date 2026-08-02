@@ -8,7 +8,7 @@ const {
   getEmployeeDashboard,
 } = require("../controllers/dashboardController");
 
-router.get("/", protect, adminOnly, getDashboardStatistics);
+router.get("/admin", protect, adminOnly, getDashboardStatistics);
 router.get("/me", protect, getEmployeeDashboard);
 
 module.exports = router;

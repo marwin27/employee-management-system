@@ -12,7 +12,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LogoutIcon from "@mui/icons-material/Logout";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 const SideBar = () => {
   const menuItems = [
@@ -38,11 +38,11 @@ const SideBar = () => {
     },
   ];
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const handleLogout = () => {
-  logout();
-  navigate("/login");
-};
+    logout();
+    navigate("/login");
+  };
   return (
     <Drawer
       variant="permanent"
@@ -68,26 +68,32 @@ const SideBar = () => {
           EMS
         </Typography>
       </Box>
-  <List>
-  {menuItems.map((item) => (
-    <ListItemButton onClick={() => navigate(item.path)}>
-      <ListItemIcon>{item.icon}</ListItemIcon>
+      <List>
+        {menuItems
+          .filter((item) => {
+            if (item.text === "Employees" && user?.role !== "Admin") {
+              return false;
+            }
+            return true;
+          })
+          .map((item) => (
+            <ListItemButton key={item.text} onClick={() => navigate(item.path)}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          ))}
+      </List>
+      <Box sx={{ mt: "auto", mb: 2 }}>
+        <List>
+          <ListItemButton onClick={handleLogout}>
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
 
-      <ListItemText primary={item.text} />
-    </ListItemButton>
-  ))}
-</List>
-<Box sx={{ mt: "auto", mb: 2 }}>
-  <List>
-    <ListItemButton onClick={handleLogout}>
-      <ListItemIcon>
-        <LogoutIcon />
-      </ListItemIcon>
-
-      <ListItemText primary="Logout" />
-    </ListItemButton>
-  </List>
-</Box>
+            <ListItemText primary="Logout" />
+          </ListItemButton>
+        </List>
+      </Box>
     </Drawer>
   );
 };
